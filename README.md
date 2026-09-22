@@ -1,4 +1,4 @@
-# eml-to-md
+# eml_to_md
 
 Un outil Python simple et robuste pour convertir des fichiers `.eml` (emails exportés) en fichiers Markdown, avec extraction automatique des images intégrées.
 
