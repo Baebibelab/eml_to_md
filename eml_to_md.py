@@ -2,14 +2,24 @@ import email
 from email.policy import default
 import os
 import re
+import unicodedata
 import argparse
 from pathlib import Path
 import logging
 
 import html2text
+from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
+
+
+def slugify(text: str) -> str:
+    """Convertit un texte en identifiant sûr pour fichiers/dossiers (sans espace ni accent)."""
+    text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
+    text = re.sub(r'[^\w\-]', '_', text)
+    text = re.sub(r'_+', '_', text)
+    return text.strip('_')
 
 
 class EmlToMarkdownConverter:
@@ -55,8 +65,11 @@ class EmlToMarkdownConverter:
         }
 
     def _extract_images(self, html_content: str, images_dir: Path) -> str:
-        """Extrait les images en fichiers séparés et remplace les références (cid: ou nom) dans le HTML."""
+        """Extrait les images avec BeautifulSoup (parsing DOM, pas de replace() fragile)."""
         images_dir.mkdir(parents=True, exist_ok=True)
+        soup = BeautifulSoup(html_content, 'html.parser')
+
+        cid_to_path = {}
         img_counter = 0
 
         for part in self.msg.walk():
@@ -70,34 +83,40 @@ class EmlToMarkdownConverter:
 
             img_counter += 1
             ext = content_type.split('/')[-1]
-            filename = part.get_filename() or f"image_{img_counter}.{ext}"
-            filename = re.sub(r'[^\w.\-]', '_', filename)
-            image_path = images_dir / filename
+            original_name = part.get_filename()
+            base_name = slugify(Path(original_name).stem) if original_name else f"image_{img_counter}"
+            filename = f"{base_name}_{img_counter}.{ext}"
 
+            image_path = images_dir / filename
             with open(image_path, 'wb') as img_f:
                 img_f.write(image_data)
 
             relative_path = f"{images_dir.name}/{filename}"
             content_id = part.get('Content-ID')
-
             if content_id:
-                cid = content_id.strip('<>')
-                if f'cid:{cid}' in html_content:
-                    html_content = html_content.replace(f'cid:{cid}', relative_path)
-                    continue
+                cid_to_path[content_id.strip('<>')] = relative_path
+            if original_name:
+                cid_to_path[original_name] = relative_path
 
-            image_name = part.get_filename()
-            if image_name and image_name in html_content:
-                html_content = html_content.replace(image_name, relative_path)
+        for img_tag in soup.find_all('img'):
+            src = img_tag.get('src', '')
+            if src.startswith('cid:'):
+                cid = src.replace('cid:', '')
+                if cid in cid_to_path:
+                    img_tag['src'] = cid_to_path[cid]
+            else:
+                filename_in_src = Path(src).name
+                if filename_in_src in cid_to_path:
+                    img_tag['src'] = cid_to_path[filename_in_src]
 
-        return html_content
+        return str(soup)
 
     def _html_to_markdown(self, html_content: str) -> str:
         converter = html2text.HTML2Text()
-        converter.body_width = 0       # pas de retour à la ligne forcé
+        converter.body_width = 0
         converter.ignore_images = False
         converter.ignore_links = False
-        converter.unicode_snob = True  # préserve les accents/unicode
+        converter.unicode_snob = True
         return converter.handle(html_content)
 
     def _build_front_matter(self, metadata: dict) -> str:
@@ -124,7 +143,7 @@ class EmlToMarkdownConverter:
                 html_content = self._extract_images(html_content, images_dir)
             markdown_body = self._html_to_markdown(html_content)
         else:
-            markdown_body = html_content  # déjà en texte brut
+            markdown_body = html_content
 
         metadata = self._extract_metadata()
         front_matter = self._build_front_matter(metadata)
@@ -134,7 +153,9 @@ class EmlToMarkdownConverter:
 
     def save(self, md_file: str = None) -> str:
         md_file = Path(md_file) if md_file else self.eml_path.with_suffix('.md')
-        images_dir = md_file.parent / f"{md_file.stem}_images"
+
+        safe_stem = slugify(md_file.stem)
+        images_dir = md_file.parent / f"{safe_stem}_images"
 
         markdown_content = self.convert(images_dir=images_dir)
 
