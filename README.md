@@ -21,8 +21,8 @@ Un outil Python simple et robuste pour convertir des fichiers `.eml` (emails exp
 Clonez le dépôt et installez les dépendances dans un environnement virtuel :
 
 ```bash
-git clone https://github.com/Baebibelab/eml-to-md.git
-cd eml-to-md
+git clone https://github.com/Baebibelab/eml_to_md.git
+cd eml_to_md
 
 python -m venv venv
 source venv/bin/activate      # macOS / Linux
