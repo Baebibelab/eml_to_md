@@ -1,5 +1,12 @@
 # eml-to-md
 
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)
+![Status](https://img.shields.io/badge/status-active-success.svg)
+![GitHub last commit](https://img.shields.io/github/last-commit/Baebibelab/eml-to-md)
+![GitHub issues](https://img.shields.io/github/issues/Baebibelab/eml-to-md)
+![GitHub stars](https://img.shields.io/github/stars/Baebibelab/eml-to-md?style=social)
+
 Un outil Python simple et robuste pour convertir des fichiers `.eml` (emails exportés) en fichiers Markdown, avec extraction automatique des images intégrées.
 
 ## ✨ Fonctionnalités
