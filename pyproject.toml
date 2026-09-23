@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eml2markdown"
+version = "2.0.0"
+description = "Convertisseur de fichiers EML en Markdown : front-matter YAML, extraction des images et des pièces jointes"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "Romain BEAL" },
+]
+keywords = ["eml", "markdown", "email", "converter", "mime", "front-matter"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Communications :: Email",
+    "Topic :: Text Processing :: Markup :: Markdown",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "html2text>=2024.2.26",
+    "beautifulsoup4>=4.12.0",
+]
+
+[project.scripts]
+eml2markdown = "eml_to_md:main"
+
+[tool.setuptools]
+py-modules = ["eml_to_md"]
+
+[tool.ruff]
+target-version = "py38"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP", "I", "RUF"]
+ignore = [
+    "UP006",  # typing.List/Dict -> list/dict : non disponible avant Python 3.9
+    "UP007",  # Optional[X] -> X | None : non disponible avant Python 3.10
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
