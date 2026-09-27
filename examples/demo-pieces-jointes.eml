@@ -1,0 +1,27 @@
+From: =?utf-8?Q?Exp=C3=A9diteur_D=C3=A9mo?= <expediteur@example.com>
+To: destinataire@example.com
+Subject: Demo 3 - Pieces jointes actives
+Date: Sat, 27 Sep 2026 10:00:00 +0200
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="ATT"
+
+--ATT
+Content-Type: text/plain; charset=utf-8
+
+Version texte de la demo 3.
+
+--ATT
+Content-Type: text/html; name="page.html"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="page.html"
+
+PHNjcmlwdD5hbGVydCgnYWN0aXZlJyk8L3NjcmlwdD4=
+
+--ATT
+Content-Type: application/pdf; name="rapport.pdf"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="rapport.pdf"
+
+JVBERi0xLjQKJSBUcnVjIGRlIGRlbW8gUERG
+
+--ATT--

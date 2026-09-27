@@ -1,0 +1,51 @@
+From: =?utf-8?Q?Exp=C3=A9diteur_D=C3=A9mo?= <expediteur@example.com>
+To: destinataire@example.com
+Subject: Demo 2 - Images inline et charset ISO-8859-1
+Date: Sat, 27 Sep 2026 10:00:00 +0200
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="IMG"
+
+--IMG
+Content-Type: multipart/alternative; boundary="ALT"
+
+--ALT
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+Version texte de la demo 2 : Ã©tÃ© Ã  oÃ¹ Ã¨ Ã§.
+--ALT
+Content-Type: text/html; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+
+<html><body>
+<h1>Demo images inline</h1>
+<p>Accents ISO-8859-1 : été, à, où, è, ç.</p>
+<p>Deux images embarquées, référencées par Content-ID :</p>
+<img src="cid:logo@example.com" alt="logo">
+<img src="cid:schema@example.com" alt="schema">
+<p>Une image référencée par son nom de fichier :</p>
+<img src="banniere.png" alt="banniere">
+</body></html>
+--ALT--
+
+--IMG
+Content-Type: image/png; name="logo.png"
+Content-Transfer-Encoding: base64
+Content-Disposition: inline; filename="logo.png"
+Content-ID: <logo@example.com>
+
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==
+--IMG
+Content-Type: image/png; name="schema.png"
+Content-Transfer-Encoding: base64
+Content-Disposition: inline; filename="schema.png"
+Content-ID: <schema@example.com>
+
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==
+--IMG
+Content-Type: image/png; name="banniere.png"
+Content-Transfer-Encoding: base64
+Content-Disposition: inline; filename="banniere.png"
+
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==
+--IMG--
