@@ -1,6 +1,7 @@
 import argparse
 import email
 import email.header
+import html as html_module
 import logging
 import re
 import sys
@@ -57,6 +58,15 @@ class EmlToMarkdownConverter:
     IMAGE_TYPES: ClassVar[frozenset] = frozenset(
         {'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'}
     )
+    URL_ATTRIBUTES: ClassVar[frozenset] = frozenset({
+        'href', 'src', 'data-src', 'srcset', 'background', 'poster', 'lowsrc',
+    })
+    SAFE_DATA_PATTERN: ClassVar = re.compile(
+        r'data:image/(?:png|jpe?g|gif|bmp|webp);base64,'
+    )
+    DANGEROUS_EXTENSIONS: ClassVar[frozenset] = frozenset(
+        {'html', 'htm', 'xhtml', 'svg', 'xml', 'mht', 'mhtml'}
+    )
 
     def __init__(self, eml_path: str, extract_images: bool = True,
                  extract_attachments: bool = False):
@@ -102,10 +112,41 @@ class EmlToMarkdownConverter:
         metadata['subject'] = subject
         return metadata
 
-    def _extract_images(self, html_content: str, images_dir: Path) -> str:
-        """Extrait les images avec BeautifulSoup (parsing DOM, pas de replace() fragile)."""
+    @classmethod
+    def _is_dangerous_url(cls, value: str) -> bool:
+        """Détecte les URI actives : schémas script et data URIs hors liste blanche.
+
+        Insensible à la casse, aux espaces, aux caractères de contrôle et aux
+        entités HTML (`&#58;` = `:`)."""
+        value = html_module.unescape(value).strip().lower()
+        value = re.sub(r'[\s\x00-\x1f]+', '', value)
+        if value.startswith(('javascript:', 'vbscript:', 'livescript:', 'mocha:')):
+            return True
+        if value.startswith('data:'):
+            return cls.SAFE_DATA_PATTERN.match(value) is None
+        return False
+
+    def _sanitize_urls(self, soup) -> None:
+        """Retire les attributs d'URL dangereux du DOM avant conversion Markdown."""
+        for tag in soup.find_all(True):
+            for name, value in list(tag.attrs.items()):
+                lname = name.lower()
+                if not isinstance(value, str):
+                    continue
+                if lname == 'srcset':
+                    candidates = [
+                        part.strip().split(' ')[0]
+                        for part in value.split(',') if part.strip()
+                    ]
+                    if any(self._is_dangerous_url(url) for url in candidates):
+                        del tag[name]
+                elif lname in self.URL_ATTRIBUTES:
+                    if self._is_dangerous_url(value):
+                        del tag[name]
+
+    def _extract_images(self, soup, images_dir: Path) -> str:
+        """Extrait les images du DOM BeautifulSoup (parsing DOM, pas de replace() fragile)."""
         images_dir.mkdir(parents=True, exist_ok=True)
-        soup = BeautifulSoup(html_content, 'html.parser')
 
         cid_to_path = {}
         img_counter = 0
@@ -178,13 +219,19 @@ class EmlToMarkdownConverter:
         lines.append('---\n')
         return '\n'.join(lines)
 
-    @staticmethod
-    def _safe_filename(name: str, fallback: str = 'piece-jointe') -> str:
-        name = (name or '').replace('\\', '/')
+    @classmethod
+    def _safe_filename(cls, name: str, fallback: str = 'piece-jointe') -> str:
+        name = html_module.unescape(name or '')
+        name = name.replace('\\', '/')
         name = name.split('/')[-1].strip()
         name = re.sub(r'[\x00-\x1f\x7f"*/:<>?|]', '_', name)
         name = name.strip('. ')
-        return name or fallback
+        if not name:
+            return fallback
+        extension = name.rsplit('.', 1)[-1].lower() if '.' in name else ''
+        if extension in cls.DANGEROUS_EXTENSIONS:
+            name += '.txt'
+        return name
 
     @staticmethod
     def _human_size(size: int) -> str:
@@ -266,8 +313,12 @@ class EmlToMarkdownConverter:
         content_type = body_part.get_content_type()
 
         if content_type == 'text/html':
+            soup = BeautifulSoup(html_content, 'html.parser')
+            self._sanitize_urls(soup)
             if self.extract_images and images_dir is not None:
-                html_content = self._extract_images(html_content, images_dir)
+                html_content = self._extract_images(soup, images_dir)
+            else:
+                html_content = str(soup)
             markdown_body = self._html_to_markdown(html_content)
         else:
             markdown_body = html_content

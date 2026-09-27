@@ -6,6 +6,7 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
+from typing import ClassVar
 
 from eml_to_md import EmlToMarkdownConverter, batch_convert
 from eml_to_md import main as eml_to_md_main
@@ -151,6 +152,74 @@ class TestBodyConversion:
         assert 'Texte correct **HTML**' in result
 
 
+class TestUrlSanitization:
+    PAYLOADS: ClassVar = [
+        ('javascript href', '<a href="javascript:alert(1)">clic</a>'),
+        ('obfuscated href', '<a href="  jaVaScRiPt&#58;alert(1)">clic</a>'),
+        ('vbscript href', '<a href="vbscript:msgbox(1)">clic</a>'),
+        ('data html href',
+         '<a href="data:text/html,<script>alert(1)</script>">clic</a>'),
+        ('svg data uri src', '<img src="data:image/svg+xml;base64,PHN2Zy8+">'),
+        ('javascript img src', '<img src="javascript:alert(1)">'),
+    ]
+
+    def test_dangerous_urls_neutralized(self, tmp_path):
+        for name, payload in self.PAYLOADS:
+            msg = make_html_eml(f'<p>Texte</p>{payload}')
+            eml_path = write_eml(tmp_path, msg)
+            result = EmlToMarkdownConverter(eml_path).convert()
+            assert 'javascript:' not in result, f'{name}: javascript: toujours présent'
+            assert 'vbscript:' not in result, f'{name}: vbscript: toujours présent'
+            assert 'data:text/html' not in result, f'{name}: data:text/html toujours présent'
+            assert 'data:image/svg' not in result, f'{name}: data:image/svg toujours présent'
+            assert 'Texte' in result, f'{name}: texte altéré'
+
+    def test_safe_links_preserved(self, tmp_path):
+        html_body = (
+            '<p>Texte</p>'
+            '<a href="https://example.com">site</a>'
+            '<a href="mailto:a@b.c">mail</a>'
+            '<img src="data:image/png;base64,iVBORw0KGgo=">'
+        )
+        msg = make_html_eml(html_body)
+        eml_path = write_eml(tmp_path, msg)
+        result = EmlToMarkdownConverter(eml_path).convert()
+        assert '(https://example.com)' in result
+        assert '(mailto:a@b.c)' in result
+        assert 'data:image/png;base64,iVBORw0KGgo=' in result
+
+    def test_srcset_dangerous_url_removed(self, tmp_path):
+        html_body = '<img src="a.png" srcset="b.png 1x, javascript:alert(1) 2x">'
+        msg = make_html_eml(html_body)
+        eml_path = write_eml(tmp_path, msg)
+        result = EmlToMarkdownConverter(eml_path).convert()
+        assert 'javascript:' not in result
+
+    def test_srcset_safe_kept(self, tmp_path):
+        html_body = '<img src="a.png" srcset="b.png 1x, c.png 2x">'
+        msg = make_html_eml(html_body)
+        eml_path = write_eml(tmp_path, msg)
+        result = EmlToMarkdownConverter(eml_path).convert()
+        assert 'javascript:' not in result
+        assert 'a.png' in result
+
+    def test_text_containing_javascript_not_altered(self, tmp_path):
+        msg = make_html_eml('<p>Lire javascript: la doc pour plus de détails</p>')
+        eml_path = write_eml(tmp_path, msg)
+        result = EmlToMarkdownConverter(eml_path).convert()
+        assert 'javascript: la doc' in result
+
+    def test_plain_body_not_processed(self, tmp_path):
+        msg = EmailMessage()
+        msg['Subject'] = 'Texte'
+        msg['From'] = 'a@example.com'
+        msg['To'] = 'b@example.com'
+        msg.set_content('Voir javascript:alert(1) dans le texte')
+        eml_path = write_eml(tmp_path, msg)
+        result = EmlToMarkdownConverter(eml_path).convert()
+        assert 'javascript:alert(1)' in result
+
+
 class TestImages:
     def make_image_eml(self, html_body, cid='<logo@example.com>', filename='logo.png'):
         msg = MIMEMultipart('alternative')
@@ -268,6 +337,46 @@ class TestAttachments:
         files = sorted(p.name for p in att_dir.iterdir())
         assert files == ['evil.sh']
         assert not (tmp_path / 'evil.sh').exists()
+
+    def test_dangerous_extension_renamed_txt(self, tmp_path):
+        msg = self.make_attachment_eml(
+            filename='page.html', content=b'<script>alert(1)</script>'
+        )
+        eml_path = write_eml(tmp_path, msg, name='mail.eml')
+        converter = EmlToMarkdownConverter(eml_path, extract_attachments=True)
+        converter.save(tmp_path / 'mail.md')
+        att_dir = tmp_path / 'mail_pieces-jointes'
+        assert sorted(p.name for p in att_dir.iterdir()) == ['page.html.txt']
+        result = (tmp_path / 'mail.md').read_text(encoding='utf-8')
+        assert '[télécharger](mail_pieces-jointes/page.html.txt)' in result
+
+    def test_dangerous_extension_svg_renamed_txt(self, tmp_path):
+        msg = self.make_attachment_eml(
+            filename='logo.svg', content=b'<svg onload="alert(1)"/>'
+        )
+        eml_path = write_eml(tmp_path, msg, name='mail.eml')
+        converter = EmlToMarkdownConverter(eml_path, extract_attachments=True)
+        converter.save(tmp_path / 'mail.md')
+        att_dir = tmp_path / 'mail_pieces-jointes'
+        assert sorted(p.name for p in att_dir.iterdir()) == ['logo.svg.txt']
+
+    def test_html_entity_filename_unescaped(self, tmp_path):
+        msg = self.make_attachment_eml(
+            filename='page&#46;html', content=b'<script>alert(1)</script>'
+        )
+        eml_path = write_eml(tmp_path, msg, name='mail.eml')
+        converter = EmlToMarkdownConverter(eml_path, extract_attachments=True)
+        converter.save(tmp_path / 'mail.md')
+        att_dir = tmp_path / 'mail_pieces-jointes'
+        assert sorted(p.name for p in att_dir.iterdir()) == ['page.html.txt']
+
+    def test_safe_extension_not_renamed(self, tmp_path):
+        msg = self.make_attachment_eml(filename='rapport.pdf')
+        eml_path = write_eml(tmp_path, msg, name='mail.eml')
+        converter = EmlToMarkdownConverter(eml_path, extract_attachments=True)
+        converter.save(tmp_path / 'mail.md')
+        att_dir = tmp_path / 'mail_pieces-jointes'
+        assert sorted(p.name for p in att_dir.iterdir()) == ['rapport.pdf']
 
 
 class TestBatch:
