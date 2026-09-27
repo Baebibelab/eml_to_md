@@ -259,6 +259,26 @@ class TestImages:
         assert 'cid:logo@example.com' in result
         assert not images_dir.exists()
 
+    def test_no_images_dir_created_without_images(self, tmp_path):
+        msg = make_html_eml('<p>Bonjour sans image</p>')
+        eml_path = write_eml(tmp_path, msg, name='mail.eml')
+        converter = EmlToMarkdownConverter(eml_path)
+        converter.save(tmp_path / 'mail.md')
+        assert (tmp_path / 'mail.md').exists()
+        assert not (tmp_path / 'mail_images').exists()
+
+    def test_no_images_dir_created_for_plain_body(self, tmp_path):
+        msg = EmailMessage()
+        msg['Subject'] = 'Texte'
+        msg['From'] = 'a@example.com'
+        msg['To'] = 'b@example.com'
+        msg.set_content('Corps texte seul')
+        eml_path = write_eml(tmp_path, msg, name='mail.eml')
+        converter = EmlToMarkdownConverter(eml_path)
+        converter.save(tmp_path / 'mail.md')
+        assert (tmp_path / 'mail.md').exists()
+        assert not (tmp_path / 'mail_images').exists()
+
     def test_save_creates_images_dir(self, tmp_path):
         msg = self.make_image_eml('<p>Logo</p><img src="cid:logo@example.com">')
         eml_path = write_eml(tmp_path, msg, name='mon mail.eml')
