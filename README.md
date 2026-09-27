@@ -21,7 +21,8 @@ Un outil Python simple et robuste pour convertir des fichiers `.eml` (emails exp
 - Noms de fichiers/dossiers "slugifiés" (sans espace ni accent) pour compatibilité maximale
 - Conversion unitaire ou en lot (dossier entier), avec mode récursif (`-r`)
 - Interface en ligne de commande simple, avec codes de sortie exploitables (0 = succès, 1 = échec)
-- Suite de tests (`pytest`) et intégration continue (lint `ruff` + tests sur Python 3.9–3.13)
+- Suite de tests (`pytest`) et intégration continue (lint `ruff` + tests sur Python 3.8–3.13)
+- Dossier [`examples/`](examples/) : trois emails de démo synthétiques et inoffensifs pour tester l'outil en conditions réelles avant d'utiliser vos propres emails
 
 ## 📦 Installation
 
@@ -144,6 +145,7 @@ Voici le compte-rendu de notre réunion...
 eml-to-md/
 ├── eml_to_md.py             # Script principal
 ├── tests/                   # Suite de tests pytest
+├── examples/                # Emails de démo pour test manuel (voir examples/README.md)
 ├── .github/workflows/       # CI (ruff + pytest) et publication PyPI
 ├── pyproject.toml           # Packaging PEP 621
 ├── requirements.txt         # Dépendances Python

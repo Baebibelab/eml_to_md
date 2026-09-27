@@ -145,9 +145,9 @@ class EmlToMarkdownConverter:
                         del tag[name]
 
     def _extract_images(self, soup, images_dir: Path) -> str:
-        """Extrait les images du DOM BeautifulSoup (parsing DOM, pas de replace() fragile)."""
-        images_dir.mkdir(parents=True, exist_ok=True)
+        """Extrait les images du DOM BeautifulSoup (parsing DOM, pas de replace() fragile).
 
+        Le dossier n'est créé que si au moins une image est réellement extraite."""
         cid_to_path = {}
         img_counter = 0
 
@@ -161,6 +161,8 @@ class EmlToMarkdownConverter:
                 continue
 
             img_counter += 1
+            if img_counter == 1:
+                images_dir.mkdir(parents=True, exist_ok=True)
             ext = content_type.split('/')[-1]
             original_name = part.get_filename()
             if original_name:

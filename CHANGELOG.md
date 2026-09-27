@@ -6,6 +6,20 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Ajouté
+
+- Dossier `examples/` : trois emails de démonstration synthétiques et inoffensifs
+  (URLs dangereuses, images inline `cid:` + charset ISO-8859-1, pièces jointes actives)
+  avec checklists de points de contrôle — voir `examples/README.md`
+- Liens du projet sur la page PyPI (`[project.urls]` : Homepage, Issues, Changelog)
+- CI : la matrice de tests couvre désormais toutes les versions Python annoncées
+  (3.8 à 3.13, contre 3.9/3.11/3.13 auparavant)
+
+### Corrigé
+
+- Le dossier `<fichier>_images/` n'est plus créé quand l'email ne contient aucune
+  image inline (il ne restait plus qu'un dossier vide à côté du Markdown)
+
 ### Sécurité
 
 - Neutralisation des URLs dangereuses dans le Markdown généré : les schémas `javascript:`,

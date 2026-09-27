@@ -1,0 +1,30 @@
+From: =?utf-8?Q?Exp=C3=A9diteur_D=C3=A9mo?= <expediteur@example.com>
+To: destinataire@example.com
+Subject: Demo 1 - URLs dangereuses neutralisees
+Date: Sat, 27 Sep 2026 10:00:00 +0200
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="SAN"
+
+--SAN
+Content-Type: text/plain; charset=utf-8
+
+Version texte de la demo 1.
+
+--SAN
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: 8bit
+
+<html><body>
+<h1>Demo URLs dangereuses</h1>
+<p>Texte legitime contenant javascript: void 0 (doit rester intact).</p>
+<a href="javascript:alert(1)">lien javascript</a>
+<a href="  jaVaScRiPt&#58;alert(2)">lien javascript obfusque</a>
+<a href="vbscript:msgbox(1)">lien vbscript</a>
+<a href="data:text/html,<script>alert(3)</script>">lien data URI piege</a>
+<a href="https://example.com">lien normal (doit rester)</a>
+<a href="mailto:contact@example.com">lien mailto (doit rester)</a>
+<img src="data:image/svg+xml;base64,PHN2Zy8+">
+<img srcset="ok.png 1x, javascript:alert(4) 2x">
+</body></html>
+
+--SAN--

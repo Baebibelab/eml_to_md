@@ -36,6 +36,11 @@ dependencies = [
     "beautifulsoup4>=4.12.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Baebibelab/eml_to_md"
+Issues = "https://github.com/Baebibelab/eml_to_md/issues"
+Changelog = "https://github.com/Baebibelab/eml_to_md/blob/main/CHANGELOG.md"
+
 [project.scripts]
 eml2markdown = "eml_to_md:main"
 
