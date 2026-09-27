@@ -4,6 +4,24 @@ Toutes les modifications notables de ce projet sont documentées dans ce fichier
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+## [Non publié]
+
+### Sécurité
+
+- Neutralisation des URLs dangereuses dans le Markdown généré : les schémas `javascript:`,
+  `vbscript:`, `livescript:`, `mocha:` (y compris obfusqués par casse, espaces ou entités
+  HTML) et les data URIs hors liste blanche (`data:text/html`, `data:image/svg+xml`...) sont
+  retirés des attributs `href`/`src`/`srcset` avant la conversion HTML → Markdown ; le texte
+  visible n'est pas altéré (un texte contenant `javascript:` est préservé)
+- Data URIs restreintes à une liste blanche (`data:image/png|jpeg|gif|bmp|webp`) ; `srcset`
+  vérifié URL par URL (une seule URL dangereuse retire l'attribut entier)
+- `--extract-attachments` : les pièces jointes aux extensions actives (`.html`, `.htm`,
+  `.xhtml`, `.svg`, `.xml`, `.mht`, `.mhtml`) sont renommées avec un suffixe `.txt` pour éviter
+  l'exécution de leur contenu à l'ouverture ; le lien de téléchargement pointe vers le fichier
+  renommé
+- `_safe_filename` décode les entités HTML des noms de pièces jointes avant nettoyage
+  (`page&#46;html` ne contourne plus la protection)
+
 ## [2.0.0] - 2026-09-23
 
 ### Ajouté

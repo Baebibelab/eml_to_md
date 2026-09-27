@@ -15,6 +15,8 @@ Un outil Python simple et robuste pour convertir des fichiers `.eml` (emails exp
 - Décodage des en-têtes MIME encoded-words (`=?utf-8?Q?...?=`) : accents et objets non-ASCII corrects
 - Extraction automatique des images intégrées (`cid:`) dans un dossier dédié
 - Pièces jointes non-image listées en fin de document (nom, type MIME, taille) ; `--extract-attachments` les sauvegarde dans un dossier dédié avec liens de téléchargement
+- 🛡️ Neutralisation des URLs dangereuses (`javascript:`, `vbscript:`, data URIs hors liste blanche) avant conversion : le Markdown généré ne contient plus de liens actifs malveillants, et le texte visible est préservé tel quel
+- Avec `--extract-attachments`, les pièces jointes aux extensions actives (`.html`, `.svg`, `.xml`, `.mht`...) sont renommées avec un suffixe `.txt` pour éviter l'exécution de leur contenu à l'ouverture
 - Gestion robuste de l'encodage (UTF-8, ISO-8859-1...)
 - Noms de fichiers/dossiers "slugifiés" (sans espace ni accent) pour compatibilité maximale
 - Conversion unitaire ou en lot (dossier entier), avec mode récursif (`-r`)
