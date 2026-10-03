@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI](https://img.shields.io/pypi/v/eml2markdown.svg)](https://pypi.org/project/eml2markdown/)
 [![CI](https://github.com/Baebibelab/eml_to_md/actions/workflows/ci.yml/badge.svg)](https://github.com/Baebibelab/eml_to_md/actions/workflows/ci.yml)
-![Status](https://img.shields.io/badge/status-active-success.svg)
+![Status](https://img.shields.io/badge/status-maintenance-blue.svg)
 
 Un outil Python simple et robuste pour convertir des fichiers `.eml` (emails exportés) en fichiers Markdown, avec extraction automatique des images intégrées et gestion des pièces jointes.
 
